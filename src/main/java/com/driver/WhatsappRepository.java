@@ -6,7 +6,6 @@ import java.util.*;
 
 @Repository
 public class WhatsappRepository {
-
     //Assume that each user belongs to at most once group
     private HashMap<Group, List<User>> groupUserMap;
     private HashMap<Group, List<Message>> groupMessageMap;
@@ -15,6 +14,7 @@ public class WhatsappRepository {
     private HashSet<String> userMobile;
     private int customGroupCount;
     private int messageId;
+    private HashMap<Group, List<User>> allAdminMap;
 
     public WhatsappRepository(){
         this.groupMessageMap = new HashMap<Group, List<Message>>();
@@ -24,6 +24,18 @@ public class WhatsappRepository {
         this.userMobile = new HashSet<>();
         this.customGroupCount = 0;
         this.messageId = 0;
+        this.allAdminMap = new HashMap<>();
+    }
+
+    public String addAdmin(User user, User approver, Group group) throws Exception {
+        // if group not exists
+        if(allAdminMap.containsKey(group)) throw new Exception("Group does not exists !");
+        // if group admin is not an approver
+        if(adminMap.get(approver) != approver) throw new Exception("Not an admin");
+        // if group does not contains user
+        if(!groupUserMap.get(group).contains(user)) throw new Exception("User does not Exists");
+        allAdminMap.get(group).add(user);
+        return  "User add successfully";
     }
 
     public String createUser(String name, String mobile) throws Exception {
@@ -39,6 +51,9 @@ public class WhatsappRepository {
         if(users.size()==2){
             Group group = new Group(users.get(1).getName(), 2);
             adminMap.put(group, users.get(0));
+            List<User> adminList = new ArrayList<>();
+            adminList.add(users.get(0));
+            allAdminMap.put(group, adminList);
             groupUserMap.put(group, users);
             groupMessageMap.put(group, new ArrayList<Message>());
             return group;
@@ -104,75 +119,15 @@ public class WhatsappRepository {
         throw new Exception("Group does not exist");
     }
 
-    public int removeUser(User user) throws Exception{
-        Boolean userFound = false;
-        Group userGroup = null;
-        for(Group group: groupUserMap.keySet()){
-            List<User> participants = groupUserMap.get(group);
-            for(User participant: participants){
-                if(participant.equals(user)){
-                    if(adminMap.get(group).equals(user)){
-                        throw new Exception("Cannot remove admin");
-                    }
-                    userGroup = group;
-                    userFound = true;
-                    break;
-                }
-            }
-            if(userFound){
-                break;
-            }
-        }
-        if(userFound){
-            List<User> users = groupUserMap.get(userGroup);
-            List<User> updatedUsers = new ArrayList<>();
-            for(User participant: users){
-                if(participant.equals(user))
-                    continue;
-                updatedUsers.add(participant);
-            }
-            groupUserMap.put(userGroup, updatedUsers);
-
-            List<Message> messages = groupMessageMap.get(userGroup);
-            List<Message> updatedMessages = new ArrayList<>();
-            for(Message message: messages){
-                if(senderMap.get(message).equals(user))
-                    continue;
-                updatedMessages.add(message);
-            }
-            groupMessageMap.put(userGroup, updatedMessages);
-
-            HashMap<Message, User> updatedSenderMap = new HashMap<>();
-            for(Message message: senderMap.keySet()){
-                if(senderMap.get(message).equals(user))
-                    continue;
-                updatedSenderMap.put(message, senderMap.get(message));
-            }
-            senderMap = updatedSenderMap;
-            return updatedUsers.size()+updatedMessages.size()+updatedSenderMap.size();
-        }
-        throw new Exception("User not found");
-    }
-
-    public String findMessage(Date start, Date end, int K) throws Exception{
-        List<Message> messages = new ArrayList<>();
-        for(Group group: groupMessageMap.keySet()){
-            messages.addAll(groupMessageMap.get(group));
-        }
-        List<Message> filteredMessages = new ArrayList<>();
-        for(Message message: messages){
-            if(message.getTimestamp().after(start) && message.getTimestamp().before(end)){
-                filteredMessages.add(message);
-            }
-        }
-        if(filteredMessages.size() < K){
-            throw new Exception("K is greater than the number of messages");
-        }
-        Collections.sort(filteredMessages, new Comparator<Message>(){
-            public int compare(Message m1, Message m2){
-                return m2.getTimestamp().compareTo(m1.getTimestamp());
-            }
-        });
-        return filteredMessages.get(K-1).getContent();
+    public String removeAdmin(User approver, User user, Group group) throws Exception {
+        // if group not exists
+        if(!groupUserMap.containsKey(group)) throw new Exception("group not exists");
+        // if group exists but approver is not the admin
+        if(adminMap.get(group) != approver) throw new Exception("Admin not present");
+        // if group exists and approver is the admin but the user not presnt which has to remove
+        if(!allAdminMap.get(group).contains(user)) return "User not present";
+        // removing the user
+        allAdminMap.get(group).remove(user);
+        return "User removed Successfuly";
     }
 }

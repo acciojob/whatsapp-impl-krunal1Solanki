@@ -36,7 +36,7 @@ public class WhatsappController {
 
     @PostMapping("/add-message")
     public int createMessage(String content){
-        // The 'i^th' created message has message id 'i'.
+        // The 'i^th' created messagehas message id 'i'.
         // Return the message id.
 
         return whatsappService.createMessage(content);
@@ -51,17 +51,17 @@ public class WhatsappController {
         return whatsappService.sendMessage(message, sender, group);
     }
     @PutMapping("/change-admin")
-    public String changeAdmin(User approver, User user, Group group) throws Exception{
+    public String changeAdmin(User approver, User user, Group group) throws Exception {
         return whatsappService.changeAdmin(approver, user, group);
     }
 
-    @DeleteMapping("/remove-user")
-    public int removeUser(User user) throws Exception{
-        return whatsappService.removeUser(user);
+    @PostMapping("/add-admin")
+    public String addAdmin(User user, User approver, Group group) throws Exception {
+        return whatsappService.addAdmin(user, approver, group);
     }
 
-    @GetMapping("/find-messages")
-    public String findMessage(Date start, Date end, int K) throws Exception{
-        return whatsappService.findMessage(start, end, K);
+    @DeleteMapping("/remove-admin")
+    public String removeAdmin(User approver, User user, Group group) throws Exception{
+        return whatsappService.removeAdmin(approver, user, group);
     }
 }
